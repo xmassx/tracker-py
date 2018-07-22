@@ -79,14 +79,13 @@ class current_activity(object):
     self.activity = activity
     self.started = current_date
     self.write_start_to_dbo()
-    self.activity.status = 'run'
     
   def write_start_to_dbo(self):
-    curr_dict = {'id': self.activity.id, 'state': self.activity.status, 'date': self.started}
+    curr_dict = {'id': self.activity.id, 'state': self.activity.status, 'date': self.started, 'from': 'start'}
     self.dbo.append(curr_dict)
     
   def write_stop_to_dbo(self):
-    curr_dict = {'id': self.activity.id, 'state': self.activity.status, 'date': self.stopped}
+    curr_dict = {'id': self.activity.id, 'state': self.activity.status, 'date': self.stopped, 'from': 'stop'}
     self.dbo.append(curr_dict)
 
 class DBO(object):
@@ -108,6 +107,8 @@ def main():
   c1 = abstract_activity('c', curr_activ)
   a1.start_activity()
   c1.start_activity()
+  a1.stop_activity()
+  c1.stop_activity()
   a1.stop_activity()
   a1.start_activity()
   a1.stop_activity()
