@@ -71,29 +71,16 @@ class current_activity(object):
   
   def update(self, activity):
     current_date = self.get_time()
-    if not self.activity:
-      self.activity = activity
-      self.started = current_date
-      self.write_start_to_dbo()
-      self.activity.status = 'run'
-      return
-      
-    print("update current active", self.activity.id)
-    
-    if self.activity.status == 'run':
+    if self.activity and self.activity.status == 'run':
       self.stopped = current_date
       self.activity.status = 'stop'
       self.write_stop_to_dbo()
-      self.activity = activity
-      self.started = current_date
-      self.write_start_to_dbo()
-      self.activity.status = 'run'
-    else:
-      self.activity = activity
-      self.started = current_date
-      self.write_start_to_dbo()
-      self.activity.status = 'run'
       
+    self.activity = activity
+    self.started = current_date
+    self.write_start_to_dbo()
+    self.activity.status = 'run'
+    
   def write_start_to_dbo(self):
     curr_dict = {'id': self.activity.id, 'state': self.activity.status, 'date': self.started}
     self.dbo.append(curr_dict)
