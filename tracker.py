@@ -13,7 +13,6 @@ class abstract_activity(object):
     self.id = self.get_id()
     self.name = self.get_name()
     self.status = 'stop'
-    self.started = ''
     self.current_active = curr_a
   
   def short_to_type(self):
@@ -33,19 +32,18 @@ class abstract_activity(object):
       return "Home"
     
   def start_activity(self):
-    if not self.started:
-      self.status = 'run'
+    if self.status == 'stop':
       print("started", self.id)
+      self.status = 'run'
       self.current_active.update(self)
     else:
       print("already start", self.id)
   
   def stop_activity(self):
-    if self.started:
+    if self.status == 'run':
       print('stopped', self.id)
       self.status = 'stop'
       self.current_active.update(self)
-      self.started = ''
     else:
       print('already stopped', self.id)
 
@@ -58,14 +56,13 @@ class current_activity(object):
     print("init current active")
     if activity:
       self.activity = activity
-      self.id = activity.id
-      self.activity.started = self.get_time()
-      self.started = activity.started
+      self.started = self.get_time()
       self.stopped = ''
       self.write_start_to_dbo()
     else:
       self.activity = None
-      self.id = None
+      self.started = ''
+      self.stopped = ''
     if dbo:
       self.dbo = dbo
   
@@ -73,18 +70,29 @@ class current_activity(object):
     return datetime.utcnow()
   
   def update(self, activity):
-    print("update current active", self.id)
     current_date = self.get_time()
-    if self.activity:
-      self.stopped = current_date
-      self.write_stop_to_dbo()
+    if not self.activity:
+      self.activity = activity
+      self.started = current_date
+      self.write_start_to_dbo()
+      self.activity.status = 'run'
+      return
       
-    self.activity = activity
-    self.id = activity.id
-    self.activity.started = current_date
-    self.started = current_date
-    self.stopped = ''
-    self.write_start_to_dbo()
+    print("update current active", self.activity.id)
+    
+    if self.activity.status == 'run':
+      self.stopped = current_date
+      self.activity.status = 'stop'
+      self.write_stop_to_dbo()
+      self.activity = activity
+      self.started = current_date
+      self.write_start_to_dbo()
+      self.activity.status = 'run'
+    else:
+      self.activity = activity
+      self.started = current_date
+      self.write_start_to_dbo()
+      self.activity.status = 'run'
       
   def write_start_to_dbo(self):
     curr_dict = {'id': self.activity.id, 'state': self.activity.status, 'date': self.started}
@@ -112,15 +120,10 @@ def main():
   a1 = abstract_activity('a', curr_activ)
   c1 = abstract_activity('c', curr_activ)
   a1.start_activity()
-  sleep(1)
   c1.start_activity()
-  sleep(1)
   a1.stop_activity()
-  sleep(1)
   a1.start_activity()
-  sleep(1)
   a1.stop_activity()
-  sleep(1)
   #print(a1.type, c1.id, a1.status)
   pprint(db.db)
   
